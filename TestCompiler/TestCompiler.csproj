@@ -12,4 +12,10 @@
       <PackageReference Include="Silverfly" Version="1.0.77" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="compiled.runtimeconfig.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
