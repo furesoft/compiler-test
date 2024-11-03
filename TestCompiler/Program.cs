@@ -13,7 +13,7 @@ public class Program
     public static void Main()
     {
         var parser = new ExpressionGrammar();
-        var tree = parser.Parse("1+2*3");
+        var tree = parser.Parse("print('hello world')");
 
         var moduleResolver = new ModuleResolver();
         moduleResolver.AddTrustedSearchPaths();
@@ -29,7 +29,7 @@ public class Program
         var program = module.CreateType("compiled", "Program", TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Public | TypeAttributes.BeforeFieldInit);
         var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [], MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);var trueConst = ConstInt.Create(moduleResolver.SysTypes.Boolean, 1);
 
-        var mainBody = Emitter.Emit(moduleResolver, tree.Tree, main);
+        var mainBody = Emitter.Emit(tree.Tree, main);
         main.Body = mainBody;
 
         Optimize(main);

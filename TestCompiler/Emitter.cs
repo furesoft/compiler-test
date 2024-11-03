@@ -8,37 +8,45 @@ namespace TestCompiler;
 
 public static class Emitter
 {
-    public static MethodBody Emit(ModuleResolver moduleResolver, AstNode node, MethodDef method)
+    public static MethodBody Emit(AstNode node, MethodDef method)
     {
         var builder = new MethodBody(method);
-
-        var consoleType = moduleResolver.Import(typeof(Console));
-        var writeLine = consoleType.FindMethod("WriteLine",
-            new MethodSig(moduleResolver.SysTypes.Void, [new TypeSig(PrimType.Int64)]));
 
         var entryBlock = builder.CreateBlock();
 
         var firstNode = ((BlockNode)node).Children[0];
-        var result = ToValue(firstNode, entryBlock);
+        var result = Emit(firstNode, entryBlock);
 
-        entryBlock.InsertLast(new CallInst(writeLine, [result]));
-
-        entryBlock.InsertLast(new ReturnInst());
+        if (result != null && result.ResultType != PrimType.Void)
+        {
+            entryBlock.InsertLast(new ReturnInst(result));
+        }
+        else
+        {
+            entryBlock.InsertLast(new ReturnInst());
+        }
 
         return builder;
     }
 
-    private static Value? ToValue(AstNode node, BasicBlock block)
+    private static Value? Emit(AstNode node, BasicBlock block)
     {
         return node switch
         {
-            LiteralNode literal => ToValue(literal, block),
-            BinaryOperatorNode bin => ToValue(bin, block),
+            LiteralNode literal => EmitLiteral(literal, block),
+            BinaryOperatorNode bin => EmitBinary(bin, block),
+            CallNode call => EmitCall(call, block),
+            GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, block),
             _ => null
         };
     }
 
-    private static Value ToValue(LiteralNode node, BasicBlock block)
+    private static Value? EmitGroup(GroupNode group, BasicBlock block)
+    {
+        return Emit(group.Expr, block);
+    }
+
+    private static Value EmitLiteral(LiteralNode node, BasicBlock block)
     {
         Value result = ConstNull.Create();
 
@@ -46,17 +54,45 @@ public static class Emitter
         {
             result = ConstInt.CreateL((long)u);
         }
+        else if (node.Value is string s)
+        {
+            result = ConstString.Create(s);
+        }
+
+        return result;
+    }
+
+    private static Value EmitCall(CallNode call, BasicBlock block)
+    {
+        var moduleResolver = block.Method.Definition.DeclaringType.Module.Resolver;
+
+        var consoleType = moduleResolver.Import(typeof(Console));
+
+        Instruction result = null;
+        if (call.FunctionExpr is NameNode n && n.Token.ToString() is "print")
+        {
+            var value = Emit(call.Arguments[0], block);
+            var writeLine = consoleType.FindMethod("WriteLine",
+                new MethodSig(moduleResolver.SysTypes.Void, [new TypeSig(value.ResultType)]));
+
+            result = new CallInst(writeLine, [value]);
+        }
+
+        if (result is not null)
+        {
+            block.InsertLast(result);
+        }
 
         return result;
     }
 
 
-    private static Value ToValue(BinaryOperatorNode node, BasicBlock block)
+    private static Value EmitBinary(BinaryOperatorNode node, BasicBlock block)
     {
-        var op = MapOperator(node.Operator.Text.ToString());
+        var op = MapBinOperator(node.Operator.Text.ToString());
 
-        var left = ToValue(node.LeftExpr, block);
-        var right = ToValue(node.RightExpr, block);
+        var left = Emit(node.LeftExpr, block);
+        var right = Emit(node.RightExpr, block);
 
         var instr = new BinaryInst(op, left, right);
 
@@ -65,14 +101,13 @@ public static class Emitter
         return instr;
     }
 
-    private static BinaryOp MapOperator(string op)
-    {
-        return op switch
+    private static BinaryOp MapBinOperator(string op) =>
+        op switch
         {
             "+" => BinaryOp.Add,
             "-" => BinaryOp.Sub,
             "*" => BinaryOp.Mul,
-            "/" => BinaryOp.FDiv
+            "/" => BinaryOp.FDiv,
+            _ => throw new ArgumentOutOfRangeException(nameof(op), op, null)
         };
-    }
 }

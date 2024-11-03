@@ -15,6 +15,7 @@ class ExpressionGrammar : Parser
         lexer.MatchNumber(allowHex: false, allowBin: false);
         lexer.UseNameAdvancer(new SampleNameAdvancer());
         lexer.MatchString("\"", "\"");
+        lexer.MatchString("'", "'");
 
         lexer.Ignore(new SingleLineCommentIgnoreMatcher("//"));
         lexer.Ignore(new MultiLineCommentIgnoreMatcher("/*", "*/"));
