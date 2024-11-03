@@ -13,7 +13,7 @@ public class Program
     public static void Main()
     {
         var parser = new ExpressionGrammar();
-        var tree = parser.Parse("print('hello world')");
+        var tree = parser.Parse("let x = 2\nprint(x)");
 
         var moduleResolver = new ModuleResolver();
         moduleResolver.AddTrustedSearchPaths();
@@ -30,9 +30,7 @@ public class Program
         var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [], MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);var trueConst = ConstInt.Create(moduleResolver.SysTypes.Boolean, 1);
 
         var mainBody = Emitter.Emit(tree.Tree, main);
-        main.Body = mainBody;
-
-        Optimize(main);
+       // Optimize(main);
 
         main.ILBody = ILGenerator.GenerateCode(main.Body);
         module.EntryPoint = main;
