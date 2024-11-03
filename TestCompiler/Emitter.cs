@@ -8,7 +8,7 @@ namespace TestCompiler;
 
 public static class Emitter
 {
-    public static void Emit(ModuleResolver moduleResolver, AstNode node, MethodDef method)
+    public static MethodBody Emit(ModuleResolver moduleResolver, AstNode node, MethodDef method)
     {
         var builder = new MethodBody(method);
 
@@ -25,8 +25,7 @@ public static class Emitter
 
         entryBlock.InsertLast(new ReturnInst());
 
-        method.Body = builder;
-        method.ILBody = ILGenerator.GenerateCode(method.Body);
+        return builder;
     }
 
     private static Value? ToValue(AstNode node, BasicBlock block)
