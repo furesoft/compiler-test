@@ -13,7 +13,7 @@ public class Program
     public static void Main()
     {
         var parser = new ExpressionGrammar();
-        var tree = parser.Parse("let x = 2\nprint(x)");
+        var tree = parser.Parse("let x = 2\nlet add x y = x + y\nprint(x)");
 
         var moduleResolver = new ModuleResolver();
         moduleResolver.AddTrustedSearchPaths();
@@ -29,10 +29,9 @@ public class Program
         var program = module.CreateType("compiled", "Program", TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Public | TypeAttributes.BeforeFieldInit);
         var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [], MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);var trueConst = ConstInt.Create(moduleResolver.SysTypes.Boolean, 1);
 
-        var mainBody = Emitter.Emit(tree.Tree, main);
-       // Optimize(main);
+        var emitter = new Emitter();
+        emitter.Emit(tree.Tree, main);
 
-        main.ILBody = ILGenerator.GenerateCode(main.Body);
         module.EntryPoint = main;
 
         module.Save("compiled.dll", false);

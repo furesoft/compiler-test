@@ -1,16 +1,18 @@
-﻿using DistIL.AsmIO;
+﻿using System.Reflection;
+using DistIL.AsmIO;
 using DistIL.CodeGen.Cil;
 using DistIL.IR;
 using DistIL.IR.Utils;
 using Silverfly.Nodes;
 using Silverfly.Nodes.Operators;
 using TestCompiler.Nodes;
+using MethodBody = DistIL.IR.MethodBody;
 
 namespace TestCompiler;
 
-public static class Emitter
+public class Emitter
 {
-    public static MethodBody Emit(AstNode node, MethodDef method)
+    public void Emit(AstNode node, MethodDef method)
     {
         method.Body = new MethodBody(method);
 
@@ -33,10 +35,11 @@ public static class Emitter
             entryBlock.InsertLast(new ReturnInst());
         }
 
-        return method.Body;
+        // Optimize(main);
+        method.ILBody = ILGenerator.GenerateCode(method.Body);
     }
 
-    private static Value? Emit(AstNode node, IRBuilder block)
+    private Value? Emit(AstNode node, IRBuilder block)
     {
         return node switch
         {
@@ -50,19 +53,30 @@ public static class Emitter
         };
     }
 
-    private static Value? EmitName(NameNode name, IRBuilder builder)
+    private Value? EmitName(NameNode name, IRBuilder builder)
     {
         if (_variables.TryGetValue(name.Token.ToString(), out var variable))
         {
             return builder.CreateLoad(variable);
         }
 
+        var arg = builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
+        if (arg != null)
+        {
+            return arg;
+        }
+
         return null;
     }
 
-    static Dictionary<string, LocalSlot> _variables = new();
-    private static Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder)
+    Dictionary<string, LocalSlot> _variables = new();
+    private Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder)
     {
+        if (let.Parameters.Any())
+        {
+            return DefineFunction(let, builder);
+        }
+
         var result = Emit(let.Value, builder);
         var variable = builder.Method.Definition.Body.CreateVar(result.ResultType, let.Name.ToString());
 
@@ -71,12 +85,29 @@ public static class Emitter
         return builder.CreateStore(variable, result);
     }
 
-    private static Value? EmitGroup(GroupNode group, IRBuilder builder)
+    private Value? DefineFunction(VariableBindingNode let, IRBuilder builder)
+    {
+        var parameters = let.Parameters.Select(_ => new ParamDef(PrimType.Int64, _.Token.ToString()));
+        var method = builder.Method.Definition.DeclaringType.CreateMethod(let.Name.ToString(), PrimType.Int64, [..parameters], MethodAttributes.Public | MethodAttributes.Static);
+
+        var body = let.Value;
+        if (let.Value is not BlockNode)
+        {
+            body = new BlockNode("", "").WithChildren([let.Value]);
+        }
+
+        var emitter = new Emitter();
+        emitter.Emit(body, method);
+
+        return new PhiInst(PrimType.Int64);
+    }
+
+    private Value? EmitGroup(GroupNode group, IRBuilder builder)
     {
         return Emit(group.Expr, builder);
     }
 
-    private static Value EmitLiteral(LiteralNode node)
+    private Value EmitLiteral(LiteralNode node)
     {
         Value result = ConstNull.Create();
 
@@ -119,7 +150,7 @@ public static class Emitter
         return result;
     }
 
-    private static Value EmitCall(CallNode call, IRBuilder builder)
+    private Value EmitCall(CallNode call, IRBuilder builder)
     {
         var moduleResolver = builder.Method.Definition.DeclaringType.Module.Resolver;
 
@@ -145,7 +176,7 @@ public static class Emitter
     }
 
 
-    private static Value EmitBinary(BinaryOperatorNode node, IRBuilder builder)
+    private Value EmitBinary(BinaryOperatorNode node, IRBuilder builder)
     {
         var op = MapBinOperator(node.Operator.Text.ToString());
 
@@ -155,7 +186,7 @@ public static class Emitter
         return builder.CreateBin(op, left, right);
     }
 
-    private static BinaryOp MapBinOperator(string op) =>
+    private BinaryOp MapBinOperator(string op) =>
         op switch
         {
             "+" => BinaryOp.Add,
