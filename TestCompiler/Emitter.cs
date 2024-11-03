@@ -33,7 +33,7 @@ public static class Emitter
     {
         return node switch
         {
-            LiteralNode literal => EmitLiteral(literal, block),
+            LiteralNode literal => EmitLiteral(literal),
             BinaryOperatorNode bin => EmitBinary(bin, block),
             CallNode call => EmitCall(call, block),
             GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, block),
@@ -46,17 +46,44 @@ public static class Emitter
         return Emit(group.Expr, block);
     }
 
-    private static Value EmitLiteral(LiteralNode node, BasicBlock block)
+    private static Value EmitLiteral(LiteralNode node)
     {
         Value result = ConstNull.Create();
 
-        if (node.Value is ulong u)
+        switch (node.Value)
         {
-            result = ConstInt.CreateL((long)u);
-        }
-        else if (node.Value is string s)
-        {
-            result = ConstString.Create(s);
+            case ulong u:
+                result = ConstInt.CreateL((long)u);
+                break;
+            case long l:
+                result = ConstInt.CreateL(l);
+                break;
+            case int i:
+                result = ConstInt.CreateI(i);
+                break;
+            case short s:
+                result = ConstInt.CreateI(s);
+                break;
+            case byte b:
+                result = ConstInt.CreateI(b);
+                break;
+            case float f:
+                result = ConstFloat.CreateS(f);
+                break;
+            case double d:
+                result = ConstFloat.CreateD(d);
+                break;
+            case bool boolean:
+                result = ConstInt.CreateI(boolean ? 1 : 0);
+                break;
+            case char c:
+                result = ConstInt.CreateI(c);
+                break;
+            case string str:
+                result = ConstString.Create(str);
+                break;
+            default:
+                throw new NotSupportedException($"The type '{node.Value.GetType()}' is not supported.");
         }
 
         return result;
