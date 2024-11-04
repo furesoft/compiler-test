@@ -50,6 +50,8 @@ public class Program
         passes.Apply<SimplifyCFG>();
         passes.Apply<ValueNumbering>();
         passes.Apply<DeadCodeElim>();
+        passes.Apply<VerificationPass>();
+        passes.Apply(new DumpPass(_ => true));
 
         passes.Run(new MethodTransformContext(passManager.Compilation, main.Body), []);
     }
