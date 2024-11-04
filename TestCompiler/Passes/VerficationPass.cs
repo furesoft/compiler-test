@@ -1,3 +1,7 @@
+using DistIL;
+using DistIL.IR.Utils;
+using DistIL.Passes;
+
 namespace TestCompiler.Passes;
 
 class VerificationPass : IMethodPass

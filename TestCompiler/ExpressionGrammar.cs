@@ -23,6 +23,8 @@ class ExpressionGrammar : Parser
         lexer.MatchPattern("#test", "%.*%");
         
         lexer.IgnorePattern(@"\?");
+
+        lexer.AddSymbols(",", "(", ")");
     }
 
     protected override void InitParser(ParserDefinition def)

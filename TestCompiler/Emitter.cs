@@ -1,17 +1,21 @@
 ﻿using System.Reflection;
+using DistIL;
 using DistIL.AsmIO;
 using DistIL.CodeGen.Cil;
 using DistIL.IR;
 using DistIL.IR.Utils;
+using DistIL.Passes;
 using Silverfly.Nodes;
 using Silverfly.Nodes.Operators;
 using TestCompiler.Nodes;
+using TestCompiler.Passes;
 using MethodBody = DistIL.IR.MethodBody;
 
 namespace TestCompiler;
 
 public class Emitter
 {
+
     public void Emit(AstNode node, MethodDef method)
     {
         method.Body = new MethodBody(method);
@@ -23,34 +27,53 @@ public class Emitter
         for (var index = 0; index < ((BlockNode)node).Children.Count; index++)
         {
             var child = ((BlockNode)node).Children[index];
-            result = Emit(child, builder);
+            _ = Emit(child, builder);
         }
 
-        if (result != null && result.ResultType != PrimType.Void)
-        {
-            entryBlock.InsertLast(new ReturnInst(result));
-        }
-        else
-        {
-            entryBlock.InsertLast(new ReturnInst());
-        }
-
-        // Optimize(main);
+        Optimize(method);
         method.ILBody = ILGenerator.GenerateCode(method.Body);
     }
 
-    private Value? Emit(AstNode node, IRBuilder block)
+    private static void Optimize(MethodDef main)
+    {
+        var passManager = new PassManager
+        {
+            Compilation = new Compilation(main.DeclaringType.Module, new ConsoleLogger(), new CompilationSettings()),
+        };
+
+        var passes = passManager.AddPasses();
+        passes.Apply<InlineMethods>();
+        passes.Apply<SimplifyInsts>();
+        passes.Apply<SimplifyCFG>();
+        passes.Apply<ValueNumbering>();
+        passes.Apply<DeadCodeElim>();
+        passes.Apply<InsertReturnPass>();
+        passes.Apply<VerificationPass>();
+        passes.Apply(new DumpPass(_ => true));
+
+        passes.Run(new MethodTransformContext(passManager.Compilation, main.Body), []);
+    }
+
+    private Value? Emit(AstNode node, IRBuilder builder)
     {
         return node switch
         {
             LiteralNode literal => EmitLiteral(literal),
-            BinaryOperatorNode bin => EmitBinary(bin, block),
-            CallNode call => EmitCall(call, block),
-            GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, block),
-            VariableBindingNode let => EmitVariableBinding(let, block),
-            NameNode name => EmitName(name, block),
+            BinaryOperatorNode bin => EmitBinary(bin, builder),
+            CallNode call => EmitCall(call, builder),
+            GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, builder),
+            VariableBindingNode let => EmitVariableBinding(let, builder),
+            LambdaNode lambda => EmitLambda(lambda, builder),
+            NameNode name => EmitName(name, builder),
             _ => null
         };
+    }
+
+    private Value? EmitLambda(LambdaNode lambda, IRBuilder builder)
+    {
+        var method = DisplayClassGenerator.GenerateLambda(lambda, builder);
+
+        return new PhiInst(PrimType.Void);
     }
 
     private Value? EmitName(NameNode name, IRBuilder builder)

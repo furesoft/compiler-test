@@ -1,3 +1,7 @@
+using DistIL.AsmIO;
+using DistIL.IR.Utils;
+using DistIL.Passes;
+
 namespace TestCompiler.Passes;
 
 class DumpPass(Predicate<MethodDef?> filter) : IMethodPass
