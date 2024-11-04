@@ -156,21 +156,32 @@ public class Emitter
 
         var consoleType = moduleResolver.Import(typeof(Console));
 
-        if (call.FunctionExpr is NameNode n && n.Token.ToString() is "print")
+        if (call.FunctionExpr is NameNode n)
         {
-            var value = Emit(call.Arguments[0], builder);
-
-            TypeDesc valueType = value.ResultType;
-            if (valueType is CompoundType c)
+            if (n.Token.ToString() is "print")
             {
-                valueType = c.ElemType;
+
+                var value = Emit(call.Arguments[0], builder);
+
+                TypeDesc valueType = value.ResultType;
+                if (valueType is CompoundType c)
+                {
+                    valueType = c.ElemType;
+                }
+
+                var writeLine = consoleType.FindMethod("WriteLine",
+                    new MethodSig(moduleResolver.SysTypes.Void, [new TypeSig(valueType)]));
+
+                return builder.CreateCall(writeLine, value);
             }
+            else if (n.Token.ToString() is "sizeOf")
+            {
+                var type = PrimType.Int32; //ToDo: add type resolving from arg
 
-            var writeLine = consoleType.FindMethod("WriteLine",
-                new MethodSig(moduleResolver.SysTypes.Void, [new TypeSig(valueType)]));
-
-            return builder.CreateCall(writeLine, value);
+                builder.Emit(new CilIntrinsic.SizeOf(type));
+            }
         }
+    
 
         return null;
     }
