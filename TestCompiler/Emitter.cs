@@ -31,7 +31,7 @@ public class Emitter
         }
 
         Optimize(method);
-        method.ILBody = ILGenerator.GenerateCode(method.Body);
+        //method.ILBody = ILGenerator.GenerateCode(method.Body);
     }
 
     private static void Optimize(MethodDef main)
@@ -183,17 +183,9 @@ public class Emitter
         {
             if (n.Token.ToString() is "print")
             {
-
                 var value = Emit(call.Arguments[0], builder);
 
-                TypeDesc valueType = value.ResultType;
-                if (valueType is CompoundType c)
-                {
-                    valueType = c.ElemType;
-                }
-
-                var writeLine = consoleType.FindMethod("WriteLine",
-                    new MethodSig(moduleResolver.SysTypes.Void, [new TypeSig(valueType)]));
+                var writeLine = moduleResolver.FindMethod("System.Console::WriteLine", [value]);
 
                 return builder.CreateCall(writeLine, value);
             }
