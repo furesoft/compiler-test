@@ -23,6 +23,7 @@ class ExpressionGrammar : Parser
         lexer.MatchPattern("#test", "%.*%");
         
         lexer.IgnorePattern(@"\?");
+        lexer.Ignore('\r');
 
         lexer.AddSymbols(",", "(", ")");
     }

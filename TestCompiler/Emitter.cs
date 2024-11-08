@@ -30,7 +30,9 @@ public class Emitter
             _ = Emit(child, builder);
         }
 
+
         Optimize(method);
+
         //method.ILBody = ILGenerator.GenerateCode(method.Body);
     }
 
@@ -42,11 +44,16 @@ public class Emitter
         };
 
         var passes = passManager.AddPasses();
-        passes.Apply<InlineMethods>();
-        passes.Apply<SimplifyInsts>();
-        passes.Apply<SimplifyCFG>();
-        passes.Apply<ValueNumbering>();
-        passes.Apply<DeadCodeElim>();
+
+        if (!Driver.IsDebug)
+        {
+            passes.Apply<InlineMethods>();
+            passes.Apply<SimplifyInsts>();
+            passes.Apply<SimplifyCFG>();
+            passes.Apply<ValueNumbering>();
+            passes.Apply<DeadCodeElim>();
+        }
+
         passes.Apply<InsertReturnPass>();
         passes.Apply<VerificationPass>();
         passes.Apply(new DumpPass(_ => true));

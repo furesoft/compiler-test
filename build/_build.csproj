@@ -15,4 +15,8 @@
     <PackageReference Include="Nuke.Common" Version="8.1.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TestCompiler\TestCompiler.csproj" />
+  </ItemGroup>
+
 </Project>
