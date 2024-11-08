@@ -26,7 +26,8 @@
       "enum": [
         "Clean",
         "Compile",
-        "Restore"
+        "Restore",
+        "Run"
       ]
     },
     "Verbosity": {
@@ -111,6 +112,9 @@
         "Solution": {
           "type": "string",
           "description": "Path to a solution file that is automatically loaded"
+        },
+        "tfm": {
+          "type": "string"
         }
       }
     },

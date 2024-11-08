@@ -1,16 +1,12 @@
 using System;
 using System.Linq;
 using Nuke.Common;
-using Nuke.Common.CI;
-using Nuke.Common.Execution;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
-using Nuke.Common.Tooling;
-using Nuke.Common.Utilities.Collections;
+using Nuke.Common.Tools.DotNet;
+using Nuke.Common.Tools.NuGet;
+using Serilog;
 using TestCompiler;
-using static Nuke.Common.EnvironmentInfo;
-using static Nuke.Common.IO.FileSystemTasks;
-using static Nuke.Common.IO.PathConstruction;
 
 class Build : NukeBuild
 {
@@ -22,6 +18,8 @@ class Build : NukeBuild
     [Solution]
     Solution Solution { get; set; }
 
+    [Parameter(Name = "tfm")] public string Tfm { get; set; }
+
     Target Clean => _ => _
         .Before(Restore)
         .Executes(() =>
@@ -31,12 +29,40 @@ class Build : NukeBuild
     Target Restore => _ => _
         .Executes(() =>
         {
+            Log.Debug("TFM: " + Tfm);
+            NuGetTasks.NuGetInstall(Configurator);
+
+            NuGetInstallSettings Configurator(NuGetInstallSettings settings)
+            {
+                return settings.SetPackageID("Newtonsoft.Json").
+                SetVersion("13.0.3").
+                SetFramework(Tfm).
+
+                SetOutputDirectory(RootDirectory / "tmp");
+            }
         });
 
     Target Compile => _ => _
         .DependsOn(Restore)
         .Executes(() =>
         {
+            var tmp = RootDirectory / "tmp";
+            var dlls = tmp.GlobFiles("**/*.dll");
+
+            Driver.moduleResolver.AddTrustedSearchPaths();
+            //Driver.moduleResolver.AddSearchPaths(dlls.Select(x => x.Parent.ToString()));
+
+            foreach (var dll in dlls)
+            {
+                try
+                {
+                    Driver.moduleResolver.Load(dll);
+                }
+                catch (Exception e)
+                {
+                }
+            }
+
             Driver.IsDebug = Configuration == Configuration.Debug;
             Driver.Sources = RootDirectory.GlobFiles("*.src").Select(_ => _.ReadAllText()).ToArray();
             Driver.OutputPath = RootDirectory;

@@ -19,4 +19,8 @@
     <ProjectReference Include="..\TestCompiler\TestCompiler.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageDownload Include="NuGet.CommandLine" Version="[6.11.1]" />
+  </ItemGroup>
+
 </Project>
