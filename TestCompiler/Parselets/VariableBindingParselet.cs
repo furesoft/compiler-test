@@ -1,0 +1,53 @@
+using System.Collections.Immutable;
+using Silverfly;
+using Silverfly.Nodes;
+using Silverfly.Parselets;
+using TestCompiler.Nodes;
+using static Silverfly.PredefinedSymbols;
+
+namespace TestCompiler.Parselets;
+
+public class VariableBindingParselet : IPrefixParselet
+{
+    public AstNode Parse(Parser parser, Token token)
+    {
+        // let name (, name)* = value
+        var names = new List<Token>();
+        while (true)
+        {
+            var name = parser.Consume(Name);
+            names.Add(name);
+            if (parser.LookAhead().Type != ",")
+                break;
+
+            parser.Consume(",");
+        }
+
+        if (names.Count == 1 && parser.LookAhead().Type == "=")
+        {
+            parser.Consume("=");
+
+            // No parameter with single name
+            var value = parser.Parse(0);
+            return new VariableBindingNode(names[0], [], value).WithRange(names[0], parser.LookAhead());
+        }
+        else if (names.Count > 1 && parser.LookAhead().Type == "=")
+        {
+            parser.Consume("=");
+
+            // Tuple-Destructuring
+            var value = parser.Parse(0);
+
+            return new TupleBindingNode([.. names.Select(name => new NameNode(name))], value)
+                .WithRange(names[0], parser.LookAhead());
+        }
+        else
+        {
+            // with parameters
+            var parameters = parser.ParseList(bindingPower: 0, "=");
+            var value = parser.Parse(0);
+
+            return new VariableBindingNode(names[0], parameters.Cast<NameNode>().ToImmutableList(), value).WithRange(names[0], parser.LookAhead());
+        }
+    }
+}
