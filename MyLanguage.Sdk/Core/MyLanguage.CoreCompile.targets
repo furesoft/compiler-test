@@ -41,6 +41,15 @@
     />
 
     <ItemGroup>
+      <OutputFiles Include="$(OutputPath)\**\*.dll" />
+    </ItemGroup>
+
+    <Copy
+            SourceFiles="@(OutputFiles)"
+            DestinationFolder="$(MSBuildProjectDirectory)\refint\%(RecursiveDir)"
+            OverwriteReadOnlyFiles="true" />
+
+    <ItemGroup>
       <_CoreCompileResourceInputs Remove="@(_CoreCompileResourceInputs)"/>
     </ItemGroup>
 

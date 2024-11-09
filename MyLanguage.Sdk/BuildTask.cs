@@ -39,7 +39,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
         }
 
         Driver.Compile();
-        File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
+       // File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
 
         return true;
     }
