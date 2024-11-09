@@ -39,6 +39,6 @@ public static class Driver
         main.ILBody = ILGenerator.GenerateCode(main.Body);
         module.EntryPoint = main;
 
-        module.Save(Path.Combine(OutputPath, "compiled.dll"), false);
+        module.Save(OutputPath, false);
     }
 }

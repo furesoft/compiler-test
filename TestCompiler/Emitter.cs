@@ -56,7 +56,7 @@ public class Emitter
 
         passes.Apply<InsertReturnPass>();
         passes.Apply<VerificationPass>();
-        passes.Apply(new DumpPass(_ => true));
+        //passes.Apply(new DumpPass(_ => true));
 
         passes.Run(new MethodTransformContext(passManager.Compilation, main.Body), []);
     }

@@ -1,0 +1,10 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- The language file extension for MyLanguage is 'ms' -->
+    <DefaultLanguageSourceExtension>.my</DefaultLanguageSourceExtension>
+  </PropertyGroup>
+
+  <Import Project="MyLanguage.ProjectSystem.props"/>
+
+</Project>
