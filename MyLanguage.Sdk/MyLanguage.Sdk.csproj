@@ -21,7 +21,7 @@
 
   <PropertyGroup Label="PackageInfo">
     <PackageId>MyLanguage.Sdk</PackageId>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <PackageType>MSBuildSdk</PackageType>
     <PackageTags>msbuild sdk MyLanguage</PackageTags>
     <Description>MSBuild SDK for MyLanguage</Description>

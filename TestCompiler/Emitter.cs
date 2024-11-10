@@ -87,13 +87,7 @@ public class Emitter
             return builder.CreateLoad(variable);
         }
 
-        var arg = builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
-        if (arg != null)
-        {
-            return arg;
-        }
-
-        return null;
+        return builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
     }
 
     Dictionary<string, LocalSlot> _variables = new();
