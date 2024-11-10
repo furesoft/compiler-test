@@ -17,7 +17,7 @@ public static class DisplayClassGenerator
         return type;
     }
 
-    public static MethodDef GenerateLambda(LambdaNode lambda, IRBuilder builder)
+    public static MethodDef GenerateLambda(LambdaNode lambda, IRBuilder builder, Driver driver)
     {
         var parameters = lambda.Parameters.Select(_ => new ParamDef(PrimType.Int64, _.Token.ToString()));
         var method = builder.Method.Definition.DeclaringType.CreateMethod("<Program>b__0_0", PrimType.Int64, [..parameters], MethodAttributes.Public | MethodAttributes.Static);
@@ -29,7 +29,7 @@ public static class DisplayClassGenerator
         }
 
         var emitter = new Emitter();
-        emitter.Emit(body, method);
+        emitter.Emit(body, method, driver);
 
         return method;
     }

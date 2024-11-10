@@ -37,6 +37,8 @@
             Condition="'%(_CoreCompileResourceInputs.WithCulture)' != 'true'"
             SourceFiles="@(Compile)"
             OutputPath="@(IntermediateAssembly)"
+            Configuration="@(Configuration)"
+            Optimize="@(Optimize)"
             ReferencePaths="@(ReferencePathWithRefAssemblies)"
     />
 

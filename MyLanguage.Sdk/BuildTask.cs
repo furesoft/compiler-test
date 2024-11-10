@@ -16,15 +16,21 @@ public class BuildTask : Microsoft.Build.Utilities.Task
     [System.ComponentModel.DataAnnotations.Required]
     public ITaskItem[] ReferencePaths { get; set; }
 
+    public bool Optimize { get; set; }
+    public string Configuration { get; set; }
+
     public override bool Execute()
     {
         var fi = new FileInfo(OutputPath);
         var dir = fi.Directory.ToString();
+        var driver = new Driver();
 
-        Driver.moduleResolver.AddTrustedSearchPaths();
+        driver.ModuleResolver.AddTrustedSearchPaths();
 
-        Driver.OutputPath = OutputPath;
-        Driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
+        driver.OutputPath = OutputPath;
+        driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
+        driver.Optimize = Optimize;
+        driver.IsDebug = Configuration == "Debug";
 
         foreach (var reference in ReferencePaths)
         {
@@ -38,7 +44,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
             }
         }
 
-        Driver.Compile();
+        driver.Compile();
        // File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
 
         return true;

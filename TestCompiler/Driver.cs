@@ -5,21 +5,23 @@ using DistIL.IR;
 
 namespace TestCompiler;
 
-public static class Driver
+public class Driver
 {
-    public static ModuleResolver moduleResolver = new();
-    public static string[] Sources;
-    public static bool IsDebug = false;
-    public static string OutputPath;
+    public ModuleResolver ModuleResolver = new();
+    public string[] Sources;
+    public bool IsDebug = false;
+    public bool Optimize = false;
+    public string OutputPath { get; set; }
+    public Version Version { get; set; } = new(1, 0);
 
-    public static void Compile()
+    public void Compile()
     {
-        moduleResolver.AddTrustedSearchPaths();
-        moduleResolver.Import(typeof(System.Runtime.Versioning.TargetFrameworkAttribute));
-        moduleResolver.Import(typeof(System.Console));
+        ModuleResolver.AddTrustedSearchPaths();
+        ModuleResolver.Import(typeof(System.Runtime.Versioning.TargetFrameworkAttribute));
+        ModuleResolver.Import(typeof(Console));
 
-        var module = moduleResolver.Create("compiled", new Version(1, 0, 1));
-        var ctor = moduleResolver.FindMethod("System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(this, string)");
+        var module = ModuleResolver.Create("compiled", Version);
+        var ctor = ModuleResolver.FindMethod("System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(this, string)");
 
         var customAttrib = new CustomAttrib(ctor, [".NETCoreApp,Version=v8.0"], []);
         module.GetCustomAttribs(true).Add(customAttrib);
@@ -34,9 +36,8 @@ public static class Driver
         var tree = parser.Parse(src);
 
         var emitter = new Emitter();
-        emitter.Emit(tree.Tree, main);
+        emitter.Emit(tree.Tree, main, this);
 
-        main.ILBody = ILGenerator.GenerateCode(main.Body);
         module.EntryPoint = main;
 
         module.Save(OutputPath, false);

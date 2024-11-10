@@ -16,27 +16,24 @@ namespace TestCompiler;
 public class Emitter
 {
 
-    public void Emit(AstNode node, MethodDef method)
+    public void Emit(AstNode node, MethodDef method, Driver driver)
     {
         method.Body = new MethodBody(method);
 
         var entryBlock = method.Body.CreateBlock();
-        var builder = new DistIL.IR.Utils.IRBuilder(entryBlock);
+        var builder = new IRBuilder(entryBlock);
 
-        Value? result = null;
-        for (var index = 0; index < ((BlockNode)node).Children.Count; index++)
+        foreach (var child in ((BlockNode)node).Children)
         {
-            var child = ((BlockNode)node).Children[index];
-            _ = Emit(child, builder);
+            _ = Emit(child, builder, driver);
         }
 
+        Optimize(method, driver);
 
-        Optimize(method);
-
-        //method.ILBody = ILGenerator.GenerateCode(method.Body);
+        method.ILBody = ILGenerator.GenerateCode(method.Body);
     }
 
-    private static void Optimize(MethodDef main)
+    private static void Optimize(MethodDef main, Driver driver)
     {
         var passManager = new PassManager
         {
@@ -45,7 +42,7 @@ public class Emitter
 
         var passes = passManager.AddPasses();
 
-        if (!Driver.IsDebug)
+        if (driver.Optimize)
         {
             passes.Apply<InlineMethods>();
             passes.Apply<SimplifyInsts>();
@@ -61,24 +58,24 @@ public class Emitter
         passes.Run(new MethodTransformContext(passManager.Compilation, main.Body), []);
     }
 
-    private Value? Emit(AstNode node, IRBuilder builder)
+    private Value? Emit(AstNode node, IRBuilder builder, Driver driver)
     {
         return node switch
         {
             LiteralNode literal => EmitLiteral(literal),
-            BinaryOperatorNode bin => EmitBinary(bin, builder),
-            CallNode call => EmitCall(call, builder),
-            GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, builder),
-            VariableBindingNode let => EmitVariableBinding(let, builder),
-            LambdaNode lambda => EmitLambda(lambda, builder),
+            BinaryOperatorNode bin => EmitBinary(bin, builder, driver),
+            CallNode call => EmitCall(call, builder, driver),
+            GroupNode group when group.LeftSymbol == "(" => EmitGroup(group, builder, driver),
+            VariableBindingNode let => EmitVariableBinding(let, builder, driver),
+            LambdaNode lambda => EmitLambda(lambda, builder, driver),
             NameNode name => EmitName(name, builder),
             _ => null
         };
     }
 
-    private Value? EmitLambda(LambdaNode lambda, IRBuilder builder)
+    private Value? EmitLambda(LambdaNode lambda, IRBuilder builder, Driver driver)
     {
-        var method = DisplayClassGenerator.GenerateLambda(lambda, builder);
+        var method = DisplayClassGenerator.GenerateLambda(lambda, builder, driver);
 
         return new PhiInst(PrimType.Void);
     }
@@ -100,22 +97,22 @@ public class Emitter
     }
 
     Dictionary<string, LocalSlot> _variables = new();
-    private Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder)
+    private Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder, Driver driver)
     {
         if (let.Parameters.Any())
         {
-            return DefineFunction(let, builder);
+            return DefineFunction(let, builder, driver);
         }
 
-        var result = Emit(let.Value, builder);
-        var variable = builder.Method.Definition.Body.CreateVar(result.ResultType, let.Name.ToString());
+        var result = Emit(let.Value, builder, driver);
+        var variable = builder.Method.Definition.Body!.CreateVar(result!.ResultType, let.Name.ToString());
 
         _variables.Add(let.Name.ToString(), variable);
 
         return builder.CreateStore(variable, result);
     }
 
-    private Value? DefineFunction(VariableBindingNode let, IRBuilder builder)
+    private Value? DefineFunction(VariableBindingNode let, IRBuilder builder, Driver driver)
     {
         var parameters = let.Parameters.Select(_ => new ParamDef(PrimType.Int64, _.Token.ToString()));
         var method = builder.Method.Definition.DeclaringType.CreateMethod(let.Name.ToString(), PrimType.Int64, [..parameters], MethodAttributes.Public | MethodAttributes.Static);
@@ -127,14 +124,14 @@ public class Emitter
         }
 
         var emitter = new Emitter();
-        emitter.Emit(body, method);
+        emitter.Emit(body, method, driver);
 
         return new PhiInst(PrimType.Int64);
     }
 
-    private Value? EmitGroup(GroupNode group, IRBuilder builder)
+    private Value? EmitGroup(GroupNode group, IRBuilder builder, Driver driver)
     {
-        return Emit(group.Expr, builder);
+        return Emit(group.Expr, builder, driver);
     }
 
     private Value EmitLiteral(LiteralNode node)
@@ -180,7 +177,7 @@ public class Emitter
         return result;
     }
 
-    private Value EmitCall(CallNode call, IRBuilder builder)
+    private Value EmitCall(CallNode call, IRBuilder builder, Driver driver)
     {
         var moduleResolver = builder.Method.Definition.DeclaringType.Module.Resolver;
 
@@ -190,7 +187,7 @@ public class Emitter
         {
             if (n.Token.ToString() is "print")
             {
-                var value = Emit(call.Arguments[0], builder);
+                var value = Emit(call.Arguments[0], builder, driver);
 
                 var writeLine = moduleResolver.FindMethod("System.Console::WriteLine", [value]);
 
@@ -209,12 +206,12 @@ public class Emitter
     }
 
 
-    private Value EmitBinary(BinaryOperatorNode node, IRBuilder builder)
+    private Value EmitBinary(BinaryOperatorNode node, IRBuilder builder, Driver driver)
     {
         var op = MapBinOperator(node.Operator.Text.ToString());
 
-        var left = Emit(node.LeftExpr, builder);
-        var right = Emit(node.RightExpr, builder);
+        var left = Emit(node.LeftExpr, builder, driver);
+        var right = Emit(node.RightExpr, builder, driver);
 
         return builder.CreateBin(op, left, right);
     }

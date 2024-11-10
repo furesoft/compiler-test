@@ -11,9 +11,10 @@ public class Program
 {
     public static void Main()
     {
-        Driver.Sources = ["let x = 4+2\nprint(x)"];
+        var driver = new Driver();
+        driver.Sources = ["let x = 4+2\nprint(x)"];
 
-        Driver.Compile();
+        driver.Compile();
 
     /*    var loop = new LoopBuilder(main.Body.CreateBlock());
         var accu = main.Body.CreateVar(PrimType.Int32, "accu");
