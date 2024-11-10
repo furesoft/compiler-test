@@ -5,7 +5,7 @@ public class Program
     public static void Main()
     {
         var driver = new Driver();
-        driver.Sources = ["let x = 4+2\nprint(x)"];
+        driver.Sources = ["test.my"];
 
         driver.Compile();
 

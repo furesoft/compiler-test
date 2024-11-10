@@ -54,7 +54,12 @@
         <Copy
                 SourceFiles="@(OutputFiles)"
                 DestinationFolder="$(IntermediateOutputPath)\refint\%(RecursiveDir)"
-                OverwriteReadOnlyFiles="true"/>
+                OverwriteReadOnlyFiles="true" />
+
+        <Copy
+                SourceFiles="@(OutputFiles)"
+                DestinationFolder="$(IntermediateOutputPath)\$(RuntimeIdentifier)\refint\%(RecursiveDir)"
+                OverwriteReadOnlyFiles="true" />
 
         <ItemGroup>
             <_CoreCompileResourceInputs Remove="@(_CoreCompileResourceInputs)"/>

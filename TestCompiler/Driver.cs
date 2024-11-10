@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using DistIL.AsmIO;
 using DistIL.IR.Utils;
@@ -15,8 +16,8 @@ public class Driver
     public ModuleResolver ModuleResolver = new();
     public bool Optimize = false;
     public string[] Sources;
-    public string OutputPath { get; set; }
-    public string RootNamespace { get; set; }
+    public string OutputPath { get; set; } = "compiled.dll";
+    public string RootNamespace { get; set; } = "";
     public Version Version { get; set; } = new(1, 0);
 
     public Silverfly.Text.SourceDocument[] Compile()
@@ -24,12 +25,17 @@ public class Driver
         ModuleResolver.AddTrustedSearchPaths();
         ModuleResolver.Import(typeof(TargetFrameworkAttribute));
         ModuleResolver.Import(typeof(Console));
+        ModuleResolver.Import(typeof(GuidAttribute));
 
         var module = ModuleResolver.Create(RootNamespace, Version);
-        var ctor = ModuleResolver.FindMethod("System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(this, string)");
+        var targetFrameworkCtor = ModuleResolver.FindMethod("System.Runtime.Versioning.TargetFrameworkAttribute::.ctor(this, string)");
+        var guidAttrCtor = ModuleResolver.FindMethod("System.Runtime.InteropServices.GuidAttribute::.ctor(this, string)");
 
-        var customAttrib = new CustomAttrib(ctor, [".NETCoreApp,Version=v8.0"], []);
-        module.GetCustomAttribs(true).Add(customAttrib);
+        var targetFrameworkAttr = new CustomAttrib(targetFrameworkCtor, [".NETCoreApp,Version=v8.0"], []);
+        module.GetCustomAttribs(true).Add(targetFrameworkAttr);
+
+        var guidAttr = new CustomAttrib(guidAttrCtor, [Guid.NewGuid().ToString()], []);
+        module.GetCustomAttribs(true).Add(guidAttr);
 
         DisplayClassGenerator.Generate(module, out var displayField);
 

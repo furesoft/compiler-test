@@ -1,10 +1,13 @@
-<Project Sdk="MyLanguage.Sdk/0.1.5">
+<Project Sdk="MyLanguage.Sdk/0.1.6">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Version>1.0.42</Version>
     <Configuration>Debug</Configuration>
+    <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <WasmSingleFileBundle>true</WasmSingleFileBundle>
   </PropertyGroup>
 
   <ItemGroup>
