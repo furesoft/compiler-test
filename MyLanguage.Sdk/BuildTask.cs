@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using Microsoft.Build.Framework;
 using TestCompiler;
@@ -18,11 +19,10 @@ public class BuildTask : Microsoft.Build.Utilities.Task
 
     public bool Optimize { get; set; }
     public string Configuration { get; set; }
+    public string Version { get; set; }
 
     public override bool Execute()
     {
-        var fi = new FileInfo(OutputPath);
-        var dir = fi.Directory.ToString();
         var driver = new Driver();
 
         driver.ModuleResolver.AddTrustedSearchPaths();
@@ -31,6 +31,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
         driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
         driver.Optimize = Optimize;
         driver.IsDebug = Configuration == "Debug";
+        driver.Version = System.Version.Parse(Version);
 
         foreach (var reference in ReferencePaths)
         {
