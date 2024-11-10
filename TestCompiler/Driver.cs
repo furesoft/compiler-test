@@ -11,6 +11,7 @@ public class Driver
     public string[] Sources;
     public bool IsDebug = false;
     public bool Optimize = false;
+    public bool DebugSymbols = false;
     public string OutputPath { get; set; }
     public Version Version { get; set; } = new(1, 0);
 
@@ -40,6 +41,6 @@ public class Driver
 
         module.EntryPoint = main;
 
-        module.Save(OutputPath, false);
+        module.Save(OutputPath, DebugSymbols);
     }
 }

@@ -21,6 +21,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
     public ITaskItem[] ReferencePaths { get; set; }
 
     public bool Optimize { get; set; }
+    public bool DebugSymbols { get; set; }
     public string Configuration { get; set; }
     public string Version { get; set; }
 
@@ -33,6 +34,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
         driver.OutputPath = OutputPath;
         driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
         driver.Optimize = Optimize;
+        driver.DebugSymbols = DebugSymbols;
         driver.IsDebug = Configuration == "Debug";
         driver.Version = System.Version.Parse(Version);
 
