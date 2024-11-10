@@ -1,6 +1,10 @@
 ﻿using System.Reflection;
 using System.Runtime.Versioning;
 using DistIL.AsmIO;
+using DistIL.IR.Utils;
+using Silverfly;
+using Silverfly.Text;
+using SourceDocument = DistIL.AsmIO.SourceDocument;
 
 namespace TestCompiler;
 
@@ -15,7 +19,7 @@ public class Driver
     public string RootNamespace { get; set; }
     public Version Version { get; set; } = new(1, 0);
 
-    public void Compile()
+    public Silverfly.Text.SourceDocument[] Compile()
     {
         ModuleResolver.AddTrustedSearchPaths();
         ModuleResolver.Import(typeof(TargetFrameworkAttribute));
@@ -34,15 +38,30 @@ public class Driver
         var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [],
             MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);
 
-        var src = string.Join("\n", Sources).Replace("\r", "");
         var parser = new ExpressionGrammar();
-        var tree = parser.Parse(src);
 
-        var emitter = new Emitter();
-        emitter.Emit(tree.Tree, main, this);
+        List<TranslationUnit> translationUnits = [];
+        foreach (var source in Sources)
+        {
+            var content = File.ReadAllText(source).Replace("\r", "");
+
+            var tree = parser.Parse(content, source);
+
+            translationUnits.Add(tree);
+
+            if (tree.Document.HasErrors)
+            {
+                goto result;
+            }
+
+            var emitter = new Emitter();
+            emitter.Emit(tree.Tree, main, this);
+        }
 
         module.EntryPoint = main;
-
         module.Save(OutputPath, DebugSymbols);
+
+        result:
+        return translationUnits.Select(tu => tu.Document).ToArray();
     }
 }

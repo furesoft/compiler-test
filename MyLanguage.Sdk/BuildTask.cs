@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
+using Silverfly.Text;
 using TestCompiler;
 
 namespace MyLanguage.Build.Tasks;
@@ -31,7 +32,7 @@ public class BuildTask : Task
 
         driver.OutputPath = OutputPath;
         driver.RootNamespace = RootNamespace;
-        driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
+        driver.Sources = SourceFiles.Select(_ => _.ItemSpec).ToArray();
         driver.Optimize = Optimize;
         driver.DebugSymbols = DebugSymbols;
         driver.IsDebug = Configuration == "Debug";
@@ -46,7 +47,25 @@ public class BuildTask : Task
             {
             }
 
-        driver.Compile();
+        var documents = driver.Compile();
+
+        foreach (var message in documents.SelectMany(_ => _.Messages))
+        {
+            switch (message.Severity)
+            {
+                case MessageSeverity.Error:
+                    Log.LogError(null, null, null,
+                        file: message.Document.Filename, message.Range.Start.Line, message.Range.Start.Column,
+                        message.Range.End.Line, message.Range.End.Column, message.Text);
+                    break;
+                case MessageSeverity.Warning:
+                    Log.LogWarning(null, null, null,
+                        file: message.Document.Filename, message.Range.Start.Line, message.Range.Start.Column,
+                        message.Range.End.Line, message.Range.End.Column, message.Text);
+                    break;
+            }
+        }
+
         // File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
 
         return true;

@@ -7,6 +7,7 @@ using DistIL.IR.Utils;
 using DistIL.Passes;
 using Silverfly.Nodes;
 using Silverfly.Nodes.Operators;
+using Silverfly.Text;
 using TestCompiler.Nodes;
 using TestCompiler.Passes;
 using MethodBody = DistIL.IR.MethodBody;
@@ -82,7 +83,15 @@ public class Emitter
     {
         if (_variables.TryGetValue(name.Token.ToString(), out var variable)) return builder.CreateLoad(variable);
 
-        return builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
+        var arg = builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
+
+        if (arg != null)
+        {
+            return arg;
+        }
+
+        name.AddMessage(MessageSeverity.Error, "Symbol '" +  name.Token + "' not defined");
+        return ConstNull.Create();
     }
 
     private Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder, Driver driver)
