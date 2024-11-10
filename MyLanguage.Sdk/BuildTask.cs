@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Threading;
 using Microsoft.Build.Framework;
 using TestCompiler;
 
