@@ -15,6 +15,7 @@ namespace TestCompiler;
 
 public class Emitter
 {
+    private readonly Dictionary<string, LocalSlot> _variables = new();
 
     public void Emit(AstNode node, MethodDef method, Driver driver)
     {
@@ -23,10 +24,7 @@ public class Emitter
         var entryBlock = method.Body.CreateBlock();
         var builder = new IRBuilder(entryBlock);
 
-        foreach (var child in ((BlockNode)node).Children)
-        {
-            _ = Emit(child, builder, driver);
-        }
+        foreach (var child in ((BlockNode)node).Children) _ = Emit(child, builder, driver);
 
         Optimize(method, driver);
 
@@ -37,7 +35,7 @@ public class Emitter
     {
         var passManager = new PassManager
         {
-            Compilation = new Compilation(main.DeclaringType.Module, new ConsoleLogger(), new CompilationSettings()),
+            Compilation = new Compilation(main.DeclaringType.Module, new ConsoleLogger(), new CompilationSettings())
         };
 
         var passes = passManager.AddPasses();
@@ -82,21 +80,14 @@ public class Emitter
 
     private Value? EmitName(NameNode name, IRBuilder builder)
     {
-        if (_variables.TryGetValue(name.Token.ToString(), out var variable))
-        {
-            return builder.CreateLoad(variable);
-        }
+        if (_variables.TryGetValue(name.Token.ToString(), out var variable)) return builder.CreateLoad(variable);
 
         return builder.Method.Args.FirstOrDefault(_ => _.Name == name.Token.ToString());
     }
 
-    Dictionary<string, LocalSlot> _variables = new();
     private Value? EmitVariableBinding(VariableBindingNode let, IRBuilder builder, Driver driver)
     {
-        if (let.Parameters.Any())
-        {
-            return DefineFunction(let, builder, driver);
-        }
+        if (!let.Parameters.IsEmpty) return DefineFunction(let, builder, driver);
 
         var result = Emit(let.Value, builder, driver);
         var variable = builder.Method.Definition.Body!.CreateVar(result!.ResultType, let.Name.ToString());
@@ -109,13 +100,11 @@ public class Emitter
     private Value? DefineFunction(VariableBindingNode let, IRBuilder builder, Driver driver)
     {
         var parameters = let.Parameters.Select(_ => new ParamDef(PrimType.Int64, _.Token.ToString()));
-        var method = builder.Method.Definition.DeclaringType.CreateMethod(let.Name.ToString(), PrimType.Int64, [..parameters], MethodAttributes.Public | MethodAttributes.Static);
+        var method = builder.Method.Definition.DeclaringType.CreateMethod(let.Name.ToString(), PrimType.Int64,
+            [..parameters], MethodAttributes.Public | MethodAttributes.Static);
 
         var body = let.Value;
-        if (let.Value is not BlockNode)
-        {
-            body = new BlockNode("", "").WithChildren([let.Value]);
-        }
+        if (let.Value is not BlockNode) body = new BlockNode("", "").WithChildren([let.Value]);
 
         var emitter = new Emitter();
         emitter.Emit(body, method, driver);
@@ -187,14 +176,15 @@ public class Emitter
 
                 return builder.CreateCall(writeLine, value);
             }
-            else if (n.Token.ToString() is "sizeOf")
+
+            if (n.Token.ToString() is "sizeOf")
             {
                 var type = PrimType.Int32; //ToDo: add type resolving from arg
 
                 builder.Emit(new CilIntrinsic.SizeOf(type));
             }
         }
-    
+
 
         return null;
     }
@@ -210,8 +200,9 @@ public class Emitter
         return builder.CreateBin(op, left, right);
     }
 
-    private BinaryOp MapBinOperator(string op) =>
-        op switch
+    private BinaryOp MapBinOperator(string op)
+    {
+        return op switch
         {
             "+" => BinaryOp.Add,
             "-" => BinaryOp.Sub,
@@ -219,4 +210,5 @@ public class Emitter
             "/" => BinaryOp.FDiv,
             _ => throw new ArgumentOutOfRangeException(nameof(op), op, null)
         };
+    }
 }

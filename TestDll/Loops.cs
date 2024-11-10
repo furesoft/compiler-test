@@ -9,10 +9,7 @@ public class Loops
     public static int Count()
     {
         var x = 0;
-        for (int i = 0; i < 9; i++)
-        {
-            x++;
-        }
+        for (var i = 0; i < 9; i++) x++;
 
         return x;
     }

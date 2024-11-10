@@ -1,9 +1,9 @@
 <Project>
 
-  <PropertyGroup>
-    <DefaultLanguageSourceExtension>.my</DefaultLanguageSourceExtension>
-  </PropertyGroup>
+    <PropertyGroup>
+        <DefaultLanguageSourceExtension>.my</DefaultLanguageSourceExtension>
+    </PropertyGroup>
 
-  <Import Project="MyLanguage.ProjectSystem.props"/>
+    <Import Project="MyLanguage.ProjectSystem.props"/>
 
 </Project>

@@ -23,7 +23,10 @@ public class RewriterVisitor : Rewriter
         For<TupleNode>(Rewrite);
     }
 
-    protected override AstNode VisitUnknown(AstNode node) => node;
+    protected override AstNode VisitUnknown(AstNode node)
+    {
+        return node;
+    }
 
     private AstNode Rewrite(TupleBindingNode node)
     {
@@ -44,19 +47,15 @@ public class RewriterVisitor : Rewriter
     private new AstNode Rewrite(LiteralNode literal)
     {
         if (literal.Value is ulong value)
-        {
             return literal with
             {
                 Value = (double)value
             };
-        }
-        else if (literal.Value is ImmutableList<AstNode> values)
-        {
+        if (literal.Value is ImmutableList<AstNode> values)
             return literal with
             {
                 Value = values.Select(Visit).ToImmutableList()
             };
-        }
 
         return literal;
     }
@@ -71,10 +70,8 @@ public class RewriterVisitor : Rewriter
             var result = rewritten.Arguments[0];
 
             // Iterate over the rest of the arguments and create a BinaryOperatorNode for each addition
-            for (int i = 1; i < rewritten.Arguments.Count; i++)
-            {
+            for (var i = 1; i < rewritten.Arguments.Count; i++)
                 result = new BinaryOperatorNode(result, name.Token.Rewrite("+"), rewritten.Arguments[i]);
-            }
 
             return result;
         }

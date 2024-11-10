@@ -13,18 +13,17 @@ public class LambdaParselet : IInfixParselet
         var p = new List<NameNode>();
 
         if (parameters is NameNode n)
-        {
             p.Add(n);
-        }
-        else if (parameters is TupleNode t)
-        {
-            p.AddRange(t.Values.Cast<NameNode>());
-        }
+        else if (parameters is TupleNode t) p.AddRange(t.Values.Cast<NameNode>());
 
         var value = parser.ParseExpression();
 
-        return new LambdaNode(p.ToImmutableList(), value).WithRange(parser.Document, parameters.Range.Start, parser.LookAhead().GetSourceSpanEnd());
+        return new LambdaNode(p.ToImmutableList(), value).WithRange(parser.Document, parameters.Range.Start,
+            parser.LookAhead().GetSourceSpanEnd());
     }
 
-    public int GetBindingPower() => 100;
+    public int GetBindingPower()
+    {
+        return 100;
+    }
 }

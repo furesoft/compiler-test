@@ -1,19 +1,19 @@
 <Project>
 
-  <Import Project="$(MSBuildToolsPath)\Microsoft.Managed.Before.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Managed.Before.targets')"/>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Managed.Before.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Managed.Before.targets')"/>
 
-  <ImportGroup Condition="'$(IsCrossTargetingBuild)' == 'true'">
-    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.CrossTargeting.targets"/>
-    <Import Project="MyLanguage.OuterBuild.targets"/>
-  </ImportGroup>
+    <ImportGroup Condition="'$(IsCrossTargetingBuild)' == 'true'">
+        <Import Project="$(MSBuildToolsPath)\Microsoft.Common.CrossTargeting.targets"/>
+        <Import Project="MyLanguage.OuterBuild.targets"/>
+    </ImportGroup>
 
-  <Import Project="MyLanguage.ProjectSystem.targets"/>
+    <Import Project="MyLanguage.ProjectSystem.targets"/>
 
-  <ImportGroup Condition="'$(IsCrossTargetingBuild)' != 'true'">
-    <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets"/>
-    <Import Project="MyLanguage.CoreCompile.targets"/>
-  </ImportGroup>
+    <ImportGroup Condition="'$(IsCrossTargetingBuild)' != 'true'">
+        <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets"/>
+        <Import Project="MyLanguage.CoreCompile.targets"/>
+    </ImportGroup>
 
-  <Import Project="$(MSBuildToolsPath)\Microsoft.Managed.After.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Managed.After.targets')"/>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.Managed.After.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.Managed.After.targets')"/>
 
 </Project>

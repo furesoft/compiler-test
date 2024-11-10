@@ -13,13 +13,8 @@ public class ImportParselet : IPrefixParselet
 
         AstNode node = new InvalidNode(token);
         if (arg is LiteralNode { Value: string path })
-        {
             node = new ImportNode(path);
-        }
-        else if (arg is NameNode name)
-        {
-            node = new ImportNode(name.Token.Text.ToString());
-        }
+        else if (arg is NameNode name) node = new ImportNode(name.Token.Text.ToString());
 
         return node.WithRange(token, parser.LookAhead());
     }

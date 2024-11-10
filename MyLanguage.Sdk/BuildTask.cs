@@ -1,15 +1,12 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Threading;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
 using TestCompiler;
 
 namespace MyLanguage.Build.Tasks;
 
-public class BuildTask : Microsoft.Build.Utilities.Task
+public class BuildTask : Task
 {
     [System.ComponentModel.DataAnnotations.Required]
     public ITaskItem[] SourceFiles { get; set; }
@@ -41,19 +38,16 @@ public class BuildTask : Microsoft.Build.Utilities.Task
         driver.Version = System.Version.Parse(Version);
 
         foreach (var reference in ReferencePaths)
-        {
             try
             {
-               // Driver.moduleResolver.Load(reference.ItemSpec);
+                // Driver.moduleResolver.Load(reference.ItemSpec);
             }
             catch
             {
-
             }
-        }
 
         driver.Compile();
-       // File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
+        // File.Copy(OutputPath, Path.Combine(dir, "refint", fi.Name), true);
 
         return true;
     }

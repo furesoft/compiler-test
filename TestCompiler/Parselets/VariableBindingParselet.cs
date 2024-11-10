@@ -31,7 +31,8 @@ public class VariableBindingParselet : IPrefixParselet
             var value = parser.Parse(0);
             return new VariableBindingNode(names[0], [], value).WithRange(names[0], parser.LookAhead());
         }
-        else if (names.Count > 1 && parser.LookAhead().Type == "=")
+
+        if (names.Count > 1 && parser.LookAhead().Type == "=")
         {
             parser.Consume("=");
 
@@ -44,10 +45,11 @@ public class VariableBindingParselet : IPrefixParselet
         else
         {
             // with parameters
-            var parameters = parser.ParseList(bindingPower: 0, "=");
+            var parameters = parser.ParseList(0, "=");
             var value = parser.Parse(0);
 
-            return new VariableBindingNode(names[0], parameters.Cast<NameNode>().ToImmutableList(), value).WithRange(names[0], parser.LookAhead());
+            return new VariableBindingNode(names[0], parameters.Cast<NameNode>().ToImmutableList(), value).WithRange(
+                names[0], parser.LookAhead());
         }
     }
 }

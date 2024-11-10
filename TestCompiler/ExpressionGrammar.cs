@@ -5,23 +5,24 @@ using TestCompiler.Parselets;
 
 namespace TestCompiler;
 
-class ExpressionGrammar : Parser
+internal class ExpressionGrammar : Parser
 {
     protected override void InitLexer(LexerConfig lexer)
     {
-        lexer.AddKeywords("let", "if", "then", "else", "enum", "import", "module"); //mark this symbols as keyword for syntax highlighting
-        
+        lexer.AddKeywords("let", "if", "then", "else", "enum", "import",
+            "module"); //mark this symbols as keyword for syntax highlighting
+
         lexer.IgnoreWhitespace();
-        lexer.MatchNumber(allowHex: false, allowBin: false);
+        lexer.MatchNumber(false, false);
         lexer.UseNameAdvancer(new SampleNameAdvancer());
         lexer.MatchString("\"", "\"");
         lexer.MatchString("'", "'");
 
         lexer.Ignore(new SingleLineCommentIgnoreMatcher("//"));
         lexer.Ignore(new MultiLineCommentIgnoreMatcher("/*", "*/"));
-        
+
         lexer.MatchPattern("#test", "%.*%");
-        
+
         lexer.IgnorePattern(@"\?");
         lexer.Ignore('\r');
 
@@ -59,6 +60,6 @@ class ExpressionGrammar : Parser
         //parserDefinition.Register("def", new GeneratedParselet());
 
         def.Block(PredefinedSymbols.SOF, PredefinedSymbols.EOF,
-            separator: PredefinedSymbols.EOL);
+            PredefinedSymbols.EOL);
     }
 }

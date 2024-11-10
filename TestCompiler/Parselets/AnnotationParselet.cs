@@ -15,10 +15,7 @@ public class AnnotationParselet : IPrefixParselet
         //@name(1)
         var call = parser.ParseExpression();
 
-        if (call is NameNode name)
-        {
-            call = new CallNode(call, []);
-        }
+        if (call is NameNode name) call = new CallNode(call, []);
 
         if (call is not CallNode node)
         {
@@ -28,13 +25,9 @@ public class AnnotationParselet : IPrefixParselet
 
         var expr = parser.ParseExpression();
         if (expr is AnnotatedNode a)
-        {
             a.Annotations = a.Annotations.Add(node);
-        }
         else
-        {
             expr.AddMessage(MessageSeverity.Error, "Annotation cannot be used for " + expr.GetType());
-        }
 
         return expr;
     }

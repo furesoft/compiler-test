@@ -8,11 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="DistIL.Core" Version="0.8.0-preview" />
-      <PackageReference Include="DistIL.OptimizerTask" Version="0.8.0-preview">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
+        <PackageReference Include="DistIL.Core" Version="0.8.0-preview"/>
+        <PackageReference Include="DistIL.OptimizerTask" Version="0.8.0-preview">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>

@@ -1,17 +1,16 @@
 ﻿using System.Reflection;
+using System.Runtime.Versioning;
 using DistIL.AsmIO;
-using DistIL.CodeGen.Cil;
-using DistIL.IR;
 
 namespace TestCompiler;
 
 public class Driver
 {
-    public ModuleResolver ModuleResolver = new();
-    public string[] Sources;
-    public bool IsDebug = false;
-    public bool Optimize = false;
     public bool DebugSymbols = false;
+    public bool IsDebug = false;
+    public ModuleResolver ModuleResolver = new();
+    public bool Optimize = false;
+    public string[] Sources;
     public string OutputPath { get; set; }
     public string RootNamespace { get; set; }
     public Version Version { get; set; } = new(1, 0);
@@ -19,7 +18,7 @@ public class Driver
     public void Compile()
     {
         ModuleResolver.AddTrustedSearchPaths();
-        ModuleResolver.Import(typeof(System.Runtime.Versioning.TargetFrameworkAttribute));
+        ModuleResolver.Import(typeof(TargetFrameworkAttribute));
         ModuleResolver.Import(typeof(Console));
 
         var module = ModuleResolver.Create(RootNamespace, Version);
@@ -30,8 +29,10 @@ public class Driver
 
         DisplayClassGenerator.Generate(module, out var displayField);
 
-        var program = module.CreateType(RootNamespace, "Program", TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Public | TypeAttributes.BeforeFieldInit);
-        var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [], MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);
+        var program = module.CreateType(RootNamespace, "Program",
+            TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.Public | TypeAttributes.BeforeFieldInit);
+        var main = program.CreateMethod("Main", new TypeSig(PrimType.Void), [],
+            MethodAttributes.Static | MethodAttributes.Public | MethodAttributes.HideBySig);
 
         var src = string.Join("\n", Sources).Replace("\r", "");
         var parser = new ExpressionGrammar();
