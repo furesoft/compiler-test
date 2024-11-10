@@ -41,6 +41,8 @@
             OutputPath="@(IntermediateAssembly)"
             ReferencePaths="@(ReferencePathWithRefAssemblies)"
             Configuration="$(Configuration)"
+            RootNamespace="$(RootNamespace)"
+            DebugSymbols="$(DebugSymbols)"
             Version="$(Version)"
             Optimize="$(Optimize)"
     />

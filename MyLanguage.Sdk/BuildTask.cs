@@ -24,6 +24,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
     public bool DebugSymbols { get; set; }
     public string Configuration { get; set; }
     public string Version { get; set; }
+    public string RootNamespace { get; set; }
 
     public override bool Execute()
     {
@@ -32,6 +33,7 @@ public class BuildTask : Microsoft.Build.Utilities.Task
         driver.ModuleResolver.AddTrustedSearchPaths();
 
         driver.OutputPath = OutputPath;
+        driver.RootNamespace = RootNamespace;
         driver.Sources = SourceFiles.Select(_ => File.ReadAllText(_.ItemSpec)).ToArray();
         driver.Optimize = Optimize;
         driver.DebugSymbols = DebugSymbols;
