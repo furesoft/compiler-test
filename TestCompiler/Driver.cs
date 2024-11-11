@@ -2,10 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using DistIL.AsmIO;
-using DistIL.IR.Utils;
 using Silverfly;
-using Silverfly.Text;
-using SourceDocument = DistIL.AsmIO.SourceDocument;
 
 namespace TestCompiler;
 

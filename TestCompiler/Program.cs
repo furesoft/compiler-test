@@ -6,6 +6,9 @@ public class Program
     {
         var driver = new Driver();
         driver.Sources = ["test.my"];
+        driver.IsDebug = true;
+        driver.OutputPath = "lll.dll";
+        driver.DebugSymbols = true;
 
         driver.Compile();
 

@@ -17,9 +17,16 @@ namespace TestCompiler;
 public class Emitter
 {
     private readonly Dictionary<string, LocalSlot> _variables = new();
+    public DebugSourceDocument DebugDocument { get; private set; }
 
     public void Emit(AstNode node, MethodDef method, Driver driver)
     {
+        DebugDocument = new DebugSourceDocument()
+        {
+            Name = node.Range.Document.Filename,
+            Language = DebugSourceDocument.CSharp
+        };
+
         method.Body = new MethodBody(method);
 
         var entryBlock = method.Body.CreateBlock();
@@ -29,7 +36,10 @@ public class Emitter
 
         Optimize(method, driver);
 
-        method.ILBody = ILGenerator.GenerateCode(method.Body);
+        var spBuilder = new SequencePointBuilder(method);
+        method.ILBody = ILGenerator.GenerateCode(method.Body, spBuilder);
+
+        spBuilder?.BuildAndReplace();
     }
 
     private static void Optimize(MethodDef main, Driver driver)
@@ -102,8 +112,11 @@ public class Emitter
         var variable = builder.Method.Definition.Body!.CreateVar(result!.ResultType, let.Name.ToString());
 
         _variables.Add(let.Name.ToString(), variable);
+        var inst = builder.CreateStore(variable, result);
+        inst.DebugLoc = new DebugSourceLocation(DebugDocument, let.Range.Start.Line, let.Range.End.Line
+            , let.Range.Start.Column, let.Range.End.Column);
 
-        return builder.CreateStore(variable, result);
+        return inst;
     }
 
     private Value? DefineFunction(VariableBindingNode let, IRBuilder builder, Driver driver)
@@ -173,8 +186,7 @@ public class Emitter
     {
         var moduleResolver = builder.Method.Definition.DeclaringType.Module.Resolver;
 
-        var consoleType = moduleResolver.Import(typeof(Console));
-
+        Instruction? instruction = null;
         if (call.FunctionExpr is NameNode n)
         {
             if (n.Token.ToString() is "print")
@@ -183,19 +195,21 @@ public class Emitter
 
                 var writeLine = moduleResolver.FindMethod("System.Console::WriteLine", [value]);
 
-                return builder.CreateCall(writeLine, value);
+                instruction = builder.CreateCall(writeLine, value);
             }
 
             if (n.Token.ToString() is "sizeOf")
             {
                 var type = PrimType.Int32; //ToDo: add type resolving from arg
 
-                builder.Emit(new CilIntrinsic.SizeOf(type));
+                instruction = builder.Emit(new CilIntrinsic.SizeOf(type));
             }
         }
 
+        instruction.DebugLoc = new DebugSourceLocation(DebugDocument, call.Range.Start.Line, call.Range.End.Line
+            , call.Range.Start.Column, call.Range.End.Column);
 
-        return null;
+        return instruction;
     }
 
 
